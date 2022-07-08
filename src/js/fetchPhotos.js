@@ -4,7 +4,7 @@ export   async function fetchPhotos(photoQuery) {
   axios.defaults.baseURL = `https://pixabay.com/api/`;
   const API_KEY = '28408201-ae115705a469d69343f5b3399';
   let page = 1;
-  per_page = 40;
+  const per_page = 40;
   const searchParams = new URLSearchParams({
       key: API_KEY,
       q: photoQuery,
