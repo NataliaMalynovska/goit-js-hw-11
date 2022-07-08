@@ -1,7 +1,10 @@
 import '../css/styles.css';
 import { createPhotoCards } from './createPhotoCards';
-import { fetchPhotos } from './fetchPhotos';
+// import { fetchPhotos } from './fetchPhotos';
+// export let page = 1;
+// export const per_page = 40;
 
+import axios from 'axios';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
@@ -18,14 +21,31 @@ const per_page = 40;
 searchForm.addEventListener('submit', onSearchForm);
 loadMoreBtn.addEventListener('click', onLoadMoreBtn );
 
+async function fetchPhotos(photoQuery) {
+ 
+  axios.defaults.baseURL = `https://pixabay.com/api/`;
+  const API_KEY = '28408201-ae115705a469d69343f5b3399';
+  const searchParams = new URLSearchParams({
+      key: API_KEY,
+      q: photoQuery,
+      image_type:  'photo',
+      orientation: 'horizontal',
+      safesearch: true,
+      page,
+      per_page,
+  });
+  const response = await axios.get(`/?${searchParams}`, ); 
+  page +=1;
+    return  response.data;
+  
+ };
 function onSearchForm (event) {
     event.preventDefault();
     photoQuery = searchForm.elements.searchQuery.value;
-    console.log(photoQuery);
     resetPage (); 
     
     if (photoQuery === '') {
-      Notify.failure("Please, enter a query");
+      notQuery();
       notVisibleBtn();
       return
     }
@@ -43,7 +63,7 @@ function onSearchForm (event) {
       lightbox.refresh();
       Notify.info(`Hooray! We found ${photos.totalHits} images.`);
     }
-    if (photos.totalHits < 40) {
+    if (photos.totalHits < per_page) {
       notVisibleBtn(); 
     }
   })
@@ -55,11 +75,11 @@ function onSearchForm (event) {
 
   function onLoadMoreBtn () {
       fetchPhotos(photoQuery)
-        .then(( photos ) => {   page +=1;console.log(page);
-        photoGallery.insertAdjacentHTML('beforeend', createPhotoCards(photos));
+        .then(( photos ) => {   
+          photoGallery.insertAdjacentHTML('beforeend', createPhotoCards(photos));
         lightbox.refresh();      
         const totalPages = Math.ceil(photos.totalHits / per_page);
-      if (page === totalPages) {
+      if (page > totalPages) {
         notVisibleBtn();
     }})
         .catch(error => console.log(error));   
@@ -68,6 +88,9 @@ function onSearchForm (event) {
     const resetPage = () => {
       photoGallery.innerHTML = "";
       page = 1; 
+    };
+    const notQuery = () => {
+      Notify.failure("Please, enter a query");
     };
     const notFound = () => {
       Notify.warning("Sorry, there are no images matching your search query. Please try again.");
